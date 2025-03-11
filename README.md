@@ -155,3 +155,201 @@ Luego, abre tu navegador y ve a `http://127.0.0.1:5000/` para interactuar con la
 
 ¡Listo! Ahora tienes una aplicación funcional en Flask con una base de datos SQLite. 🎉
 
+
+
+¡Perfecto! Vamos a estructurar el README de GitHub explicando cada parte del código y proporcionando las celdas para que los usuarios puedan copiarlo de manera fácil. A continuación te doy una sugerencia de cómo puedes estructurarlo.
+
+---
+
+# Aplicación Flask para Gestionar Notas
+
+Este es un proyecto básico de una aplicación web utilizando Flask y SQLite para gestionar las notas de los estudiantes. Los usuarios pueden ingresar, corregir y ver las notas, todo ello protegido por un sistema de autenticación simple.
+
+## Requisitos
+
+- Python 3.x
+- Flask
+- SQLite
+
+Puedes instalar Flask ejecutando:
+
+```bash
+pip install flask
+```
+
+## Estructura del Proyecto
+
+El código está dividido en varias rutas y funciones que gestionan la autenticación de usuarios, la inserción y actualización de notas, y la visualización de datos. Vamos a ver cada parte del código con más detalle.
+
+---
+
+## 1. Configuración Inicial
+
+Lo primero que hacemos es importar las librerías necesarias, como Flask, y configurar nuestra base de datos SQLite. 
+
+```python
+from flask import Flask, render_template, request, redirect, url_for, flash
+import sqlite3
+
+app = Flask(__name__)
+app.secret_key = 'secreto'
+```
+
+- **Flask**: Es el framework web que utilizamos para crear la aplicación.
+- **sqlite3**: Usamos esta librería para interactuar con la base de datos SQLite.
+- **`app.secret_key`**: Es importante para gestionar las sesiones y mensajes flash.
+
+---
+
+## 2. Configuración de la Base de Datos
+
+A continuación, definimos dos funciones para conectar a la base de datos y crear la tabla donde almacenaremos las notas.
+
+### Conexión a la base de datos
+
+```python
+def conectar_db():
+    conn = sqlite3.connect('notas.db')
+    conn.row_factory = sqlite3.Row
+    return conn
+```
+
+Esta función se encarga de crear una conexión con la base de datos `notas.db` y configurar el formato de las filas como diccionarios para facilitar el acceso a las columnas.
+
+### Creación de la tabla
+
+```python
+def crear_tabla():
+    with conectar_db() as conn:
+        conn.execute('''CREATE TABLE IF NOT EXISTS notas (
+                        idal INTEGER PRIMARY KEY,
+                        nota_media REAL NOT NULL)''')
+        conn.commit()
+
+crear_tabla()
+```
+
+Aquí, creamos una tabla `notas` con dos columnas: `idal` (ID del alumno) y `nota_media` (la nota del alumno). Si la tabla ya existe, no la crea de nuevo.
+
+---
+
+## 3. Rutas y Funciones de la Aplicación
+
+Ahora vamos a explorar las distintas rutas de la aplicación. Cada ruta corresponde a una página o funcionalidad específica.
+
+### Ruta de login
+
+```python
+@app.route('/', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        usuario = request.form['usuario']
+        contraseña = request.form['contraseña']
+        if usuario == 'admin' and contraseña == 'admin':
+            return redirect(url_for('menu'))
+        else:
+            flash('Usuario o contraseña incorrectos. Inténtelo de nuevo.')
+    return render_template('login.html')
+```
+
+- **`@app.route('/')`**: Esta es la página de inicio, donde los usuarios deben iniciar sesión.
+- Si las credenciales son correctas (`usuario = admin` y `contraseña = admin`), redirige al usuario al menú principal.
+
+---
+
+### Ruta de Menú
+
+```python
+@app.route('/menu')
+def menu():
+    return render_template('menu.html')
+```
+
+- **`/menu`**: Una vez que el usuario ha iniciado sesión correctamente, se muestra el menú con las opciones disponibles.
+
+---
+
+### Ruta para Introducir Notas
+
+```python
+@app.route('/introducir', methods=['GET', 'POST'])
+def introducir():
+    if request.method == 'POST':
+        idal = request.form['idal']
+        nota_media = request.form['nota_media']
+        try:
+            with conectar_db() as conn:
+                conn.execute('INSERT INTO notas (idal, nota_media) VALUES (?, ?)', (idal, nota_media))
+                conn.commit()
+            imagen = 'aprobado.png' if float(nota_media) >= 5 else 'suspendido.png'
+            return render_template('resultado.html', imagen=imagen)
+        except sqlite3.IntegrityError:
+            flash('Error: IDAL ya existe.')
+    return render_template('introducir.html')
+```
+
+- **`/introducir`**: En esta ruta, el usuario puede ingresar las notas de los estudiantes.
+- Si la nota es mayor o igual a 5, se muestra una imagen de "aprobado", de lo contrario, una de "suspendido".
+- Si el `IDAL` ya existe en la base de datos, se muestra un mensaje de error.
+
+---
+
+### Ruta para Corregir Notas
+
+```python
+@app.route('/corregir', methods=['GET', 'POST'])
+def corregir():
+    if request.method == 'POST':
+        idal = request.form['idal']
+        nota_media = request.form['nota_media']
+        with conectar_db() as conn:
+            conn.execute('UPDATE notas SET nota_media = ? WHERE idal = ?', (nota_media, idal))
+            conn.commit()
+        flash(f'Nota media actualizada para el IDAL: {idal}')
+    return render_template('corregir.html')
+```
+
+- **`/corregir`**: Esta ruta permite al usuario corregir las notas de los estudiantes mediante su `IDAL`.
+
+---
+
+### Ruta para Mostrar Notas
+
+```python
+@app.route('/mostrar')
+def mostrar():
+    with conectar_db() as conn:
+        notas = conn.execute('SELECT * FROM notas').fetchall()
+    return render_template('mostrar.html', notas=notas)
+```
+
+- **`/mostrar`**: Muestra todas las notas almacenadas en la base de datos.
+
+---
+
+## 4. Ejecutar la Aplicación
+
+Finalmente, al final del archivo se incluye este bloque para ejecutar la aplicación en modo de depuración:
+
+```python
+if __name__ == '__main__':
+    app.run(debug=True)
+```
+
+Este bloque asegura que la aplicación se ejecute si el archivo se ejecuta directamente desde la línea de comandos.
+
+---
+
+## Plantillas HTML
+
+Este proyecto también requiere las plantillas HTML (`login.html`, `menu.html`, `introducir.html`, `resultado.html`, `corregir.html`, `mostrar.html`). Estas plantillas deben estar en un directorio llamado `templates`.
+
+---
+
+## Conclusión
+
+Este proyecto es un ejemplo sencillo de cómo manejar bases de datos con Flask y SQLite, permitiendo la gestión de notas a través de una interfaz web. Puedes ampliar este proyecto añadiendo más funcionalidades como la autenticación avanzada, validación de entradas o incluso la creación de un sistema de usuarios más robusto.
+
+---
+
+¡Y eso es todo! Ahora los usuarios pueden seguir las instrucciones paso a paso y copiar cada fragmento de código según lo vayan necesitando.

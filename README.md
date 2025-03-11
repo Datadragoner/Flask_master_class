@@ -357,16 +357,114 @@ Este proyecto es un ejemplo sencillo de cómo manejar bases de datos con Flask y
 
 
 
-Aquí tienes la explicación lista para agregarla a un archivo `README.md`:
+Lo que tu profesor te dio (`{% block titulo %}{% endblock %}`) es parte de una característica poderosa de **Jinja2**, que es el motor de plantillas que Flask utiliza. La idea aquí es tener una **plantilla base** con una estructura común, y luego, en las páginas específicas, puedes reemplazar o extender partes de esa plantilla base para personalizar el contenido según sea necesario.
 
-```markdown
-# Proyecto Flask con Plantillas Base
+### Pasos para usar bloques y plantillas base en Flask:
 
-Este proyecto utiliza Flask y Jinja2 para crear una aplicación web modular, utilizando plantillas base para compartir una estructura común en diferentes páginas, permitiendo una fácil personalización del contenido.
+#### 1. **Crear la plantilla base (base.html):**
+   Este archivo contendrá el HTML común, donde se definen los bloques. En tu caso, parece que tienes un bloque llamado `titulo` que probablemente se usa para definir el título de la página.
 
-## Estructura del Proyecto
+   Ejemplo de `base.html`:
 
-La estructura del proyecto es la siguiente:
+   ```html
+   <!DOCTYPE html>
+   <html lang="es">
+   <head>
+       <meta charset="UTF-8">
+       <meta name="viewport" content="width=device-width, initial-scale=1.0">
+       <title>{% block titulo %}Mi Aplicación Flask{% endblock %}</title>
+   </head>
+   <body>
+       <header>
+           <h1>Bienvenido a Mi Aplicación Flask</h1>
+           <nav>
+               <ul>
+                   <li><a href="/">Inicio</a></li>
+                   <li><a href="/pista">Pista</a></li>
+                   <li><a href="/profesor">Profesor</a></li>
+               </ul>
+           </nav>
+       </header>
+
+       <div class="content">
+           {% block contenido %}{% endblock %}
+       </div>
+
+       <footer>
+           <p>&copy; 2025 Mi Aplicación Flask</p>
+       </footer>
+   </body>
+   </html>
+   ```
+
+   En este ejemplo:
+   - **`{% block titulo %}`** y **`{% endblock %}`** definen un bloque para el título de la página. Si no se especifica un título, el valor por defecto es "Mi Aplicación Flask".
+   - **`{% block contenido %}`** es otro bloque donde se insertará el contenido específico de cada página.
+
+#### 2. **Crear una plantilla específica (por ejemplo, pista.html):**
+   En esta página, utilizarás la plantilla base y reemplazarás los bloques que has definido en `base.html`.
+
+   Ejemplo de `pista.html`:
+
+   ```html
+   {% extends "base.html" %}
+
+   {% block titulo %}Pista - Mi Aplicación Flask{% endblock %}
+
+   {% block contenido %}
+   <h2>Información sobre la Pista</h2>
+   <p>Este es el contenido relacionado con la pista.</p>
+   {% endblock %}
+   ```
+
+   En este archivo:
+   - **`{% extends "base.html" %}`** indica que esta página se basa en la plantilla `base.html`.
+   - **`{% block titulo %}`** reemplaza el bloque `titulo` de `base.html` con "Pista - Mi Aplicación Flask".
+   - **`{% block contenido %}`** reemplaza el bloque `contenido` de `base.html` con información específica de la pista.
+
+#### 3. **Crear otra plantilla específica (por ejemplo, profesor.html):**
+   Siguiendo el mismo concepto, si deseas hacer una página para el profesor, se haría de manera similar.
+
+   Ejemplo de `profesor.html`:
+
+   ```html
+   {% extends "base.html" %}
+
+   {% block titulo %}Profesor - Mi Aplicación Flask{% endblock %}
+
+   {% block contenido %}
+   <h2>Información sobre el Profesor</h2>
+   <p>Este es el contenido relacionado con el profesor.</p>
+   {% endblock %}
+   ```
+
+#### 4. **Modificar la vista en `app.py`:**
+   Ahora, en tu archivo `app.py`, puedes crear rutas para estas páginas específicas y renderizar las plantillas correspondientes.
+
+   ```python
+   from flask import Flask, render_template
+
+   app = Flask(__name__)
+
+   @app.route('/')
+   def home():
+       return render_template('index.html')
+
+   @app.route('/pista')
+   def pista():
+       return render_template('pista.html')
+
+   @app.route('/profesor')
+   def profesor():
+       return render_template('profesor.html')
+
+   if __name__ == '__main__':
+       app.run(debug=True)
+   ```
+
+#### 5. **Estructura del proyecto final:**
+
+Tu proyecto debería verse algo así:
 
 ```
 /mi_aplicacion
@@ -378,140 +476,11 @@ La estructura del proyecto es la siguiente:
     └── profesor.html
 ```
 
-### Archivos Clave:
-- `app.py`: Archivo principal donde se definen las rutas y vistas.
-- `base.html`: Plantilla base con la estructura común de la aplicación.
-- `index.html`, `pista.html`, `profesor.html`: Páginas específicas que heredan de `base.html`.
+### Explicación:
 
-## Cómo Funciona
-
-### 1. Crear la Plantilla Base (`base.html`)
-
-La plantilla base contiene una estructura común para todas las páginas, como el encabezado, la barra de navegación y el pie de página. En esta plantilla se definen los bloques, que son secciones donde las páginas específicas pueden insertar su contenido.
-
-Ejemplo de `base.html`:
-
-```html
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block titulo %}Mi Aplicación Flask{% endblock %}</title>
-</head>
-<body>
-    <header>
-        <h1>Bienvenido a Mi Aplicación Flask</h1>
-        <nav>
-            <ul>
-                <li><a href="/">Inicio</a></li>
-                <li><a href="/pista">Pista</a></li>
-                <li><a href="/profesor">Profesor</a></li>
-            </ul>
-        </nav>
-    </header>
-
-    <div class="content">
-        {% block contenido %}{% endblock %}
-    </div>
-
-    <footer>
-        <p>&copy; 2025 Mi Aplicación Flask</p>
-    </footer>
-</body>
-</html>
-```
-
-En este ejemplo:
-- **`{% block titulo %}`**: Este bloque es reemplazado por un valor específico en cada página, como el título de la página.
-- **`{% block contenido %}`**: Este bloque se utiliza para el contenido específico de cada página.
-
-### 2. Crear una Página Específica (`pista.html`)
-
-En las páginas específicas, usaremos la plantilla base y reemplazaremos los bloques con contenido único para esa página.
-
-Ejemplo de `pista.html`:
-
-```html
-{% extends "base.html" %}
-
-{% block titulo %}Pista - Mi Aplicación Flask{% endblock %}
-
-{% block contenido %}
-<h2>Información sobre la Pista</h2>
-<p>Este es el contenido relacionado con la pista.</p>
-{% endblock %}
-```
-
-En este archivo:
-- **`{% extends "base.html" %}`** indica que esta página se basa en la plantilla `base.html`.
-- **`{% block titulo %}`** reemplaza el bloque `titulo` con un valor específico.
-- **`{% block contenido %}`** reemplaza el bloque `contenido` con información específica de la página.
-
-### 3. Crear Otra Página Específica (`profesor.html`)
-
-De manera similar, puedes crear otras páginas como `profesor.html`.
-
-Ejemplo de `profesor.html`:
-
-```html
-{% extends "base.html" %}
-
-{% block titulo %}Profesor - Mi Aplicación Flask{% endblock %}
-
-{% block contenido %}
-<h2>Información sobre el Profesor</h2>
-<p>Este es el contenido relacionado con el profesor.</p>
-{% endblock %}
-```
-
-### 4. Modificar el Archivo `app.py`
-
-En `app.py`, definimos las rutas de la aplicación Flask para renderizar las plantillas correspondientes.
-
-```python
-from flask import Flask, render_template
-
-app = Flask(__name__)
-
-@app.route('/')
-def home():
-    return render_template('index.html')
-
-@app.route('/pista')
-def pista():
-    return render_template('pista.html')
-
-@app.route('/profesor')
-def profesor():
-    return render_template('profesor.html')
-
-if __name__ == '__main__':
-    app.run(debug=True)
-```
-
-### 5. Explicación de los Bloques de Jinja2
-
-- **`{% extends "base.html" %}`**: Inicia la herencia de la plantilla base `base.html`, lo que permite reutilizar la estructura común.
-- **`{% block titulo %}` y `{% block contenido %}`**: Son bloques definidos en la plantilla base que se pueden reemplazar en las plantillas específicas. Por ejemplo, en `pista.html`, el bloque `titulo` se reemplaza con "Pista - Mi Aplicación Flask" y el bloque `contenido` con el contenido específico de esa página.
+- **`{% extends "base.html" %}`** en `pista.html` y `profesor.html` indica que ambas páginas heredarán de la plantilla base `base.html`.
+- **`{% block titulo %}` y `{% block contenido %}`** son lugares donde puedes insertar contenido específico para cada página. Cuando visitas la página `/pista`, el bloque `titulo` se reemplazará por "Pista - Mi Aplicación Flask", y el bloque `contenido` se reemplazará con el contenido de esa página específica.
   
-## Ejecutar el Proyecto
+De esta forma, puedes mantener una estructura común (encabezado, pie de página, navegación) y personalizar solo las partes necesarias para cada página específica, como el título o el contenido.
 
-1. Asegúrate de tener Flask instalado. Si no lo tienes, instala Flask ejecutando:
-    ```bash
-    pip install flask
-    ```
-
-2. Ejecuta la aplicación con:
-    ```bash
-    python app.py
-    ```
-
-3. Abre tu navegador y visita `http://127.0.0.1:5000/` para ver la aplicación en funcionamiento.
-
-## Conclusión
-
-Este enfoque permite crear aplicaciones web modulares y reutilizables, manteniendo una estructura común para todas las páginas y personalizando solo las partes necesarias, como el título y el contenido de cada página.
-```
-
-Este archivo `README.md` explica detalladamente cómo funciona la estructura de plantillas base en Flask utilizando Jinja2. Puedes agregarlo a tu proyecto y usarlo como documentación para ti o para otros desarrolladores que trabajen contigo.
+¡Y eso es todo! Con esto, puedes crear una aplicación Flask modular y bien estructurada utilizando plantillas base y bloques.
